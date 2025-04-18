@@ -9,13 +9,14 @@ sys.path.append(current_dir)
 sys.path.append(os.path.join(current_dir, "indextts"))
 
 import gradio as gr
-from utils.webui_utils import next_page, prev_page
 
 from indextts.infer import IndexTTS
 from tools.i18n.i18n import I18nAuto
 
 i18n = I18nAuto(language="zh_CN")
 MODE = 'local'
+snapshot_download("IndexTeam/Index-TTS",local_dir="checkpoints",)
+
 tts = IndexTTS(model_dir="checkpoints",cfg_path="checkpoints/config.yaml")
 
 os.makedirs("outputs/tasks",exist_ok=True)

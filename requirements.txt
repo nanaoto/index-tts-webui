@@ -1,3 +1,4 @@
+-i https://pypi.tuna.tsinghua.edu.cn/simple
 accelerate==0.25.0
 transformers==4.36.2
 tokenizers==0.15.0
@@ -19,7 +20,12 @@ omegaconf
 sentencepiece
 librosa
 gradio
+funasr==1.0.27
 tqdm
-
+addict
+datasets==2.18.0
 WeTextProcessing; platform_machine != "Darwin"
 wetext; platform_system == "Darwin"
+Faster_Whisper
+simplejson
+sortedcontainers

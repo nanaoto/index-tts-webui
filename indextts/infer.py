@@ -7,6 +7,7 @@ import torchaudio
 from torch.nn.utils.rnn import pad_sequence
 from omegaconf import OmegaConf
 
+from common import i18n
 from indextts.BigVGAN.models import BigVGAN as Generator
 from indextts.gpt.model import UnifiedVoice
 from indextts.utils.checkpoint import load_checkpoint
@@ -176,10 +177,12 @@ class IndexTTS:
 
         for sent in sentences:
             print(sent)
+            print(i18n("实际输入的目标文本(每句):"), sent)
             # sent = " ".join([char for char in sent.upper()]) if lang == "ZH" else sent.upper()
             cleand_text = tokenize_by_CJK_char(sent)
             # cleand_text = "他 那 像 HONG3 小 孩 似 的 话 , 引 得 人 们 HONG1 堂 大 笑 , 大 家 听 了 一 HONG3 而 散 ."
             print("cleand_text:", cleand_text)
+            print(i18n("前端处理后的文本(每句):"), cleand_text)
 
             text_tokens = torch.IntTensor(tokenizer.encode(cleand_text)).unsqueeze(0).to(self.device)
 
@@ -252,8 +255,7 @@ class IndexTTS:
 
 
 if __name__ == "__main__":
-    prompt_wav="test_data/input.wav"
-    prompt_wav="testwav/spk_1744181067_1.wav"
+    prompt_wav="test_data/00000.wav"
     #text="晕 XUAN4 是 一 种 GAN3 觉"
     #text='大家好，我现在正在bilibili 体验 ai 科技，说实话，来之前我绝对想不到！AI技术已经发展到这样匪夷所思的地步了！'
     text="There is a vehicle arriving in dock number 7?"
