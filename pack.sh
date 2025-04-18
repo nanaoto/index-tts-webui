@@ -9,7 +9,7 @@ fi
 # 获取仓库根目录的绝对路径
 REPO_ROOT=$(git rev-parse --show-toplevel)
 # 目标目录在仓库根目录的上一层
-TARGET_DIR=$(dirname "$REPO_ROOT")/webui_pack
+TARGET_DIR=$(dirname "$REPO_ROOT")/webui_pack_1
 
 # 创建目标目录
 mkdir -p "$TARGET_DIR"
@@ -27,7 +27,7 @@ for file in $FILES; do
     mkdir -p "$target_dir"
 
     # 复制文件
-    cp "$file" "$target_file"
+    cp -p "$file" "$target_file"
 done
 
 echo "复制完成！共复制了 $(echo "$FILES" | wc -l | tr -d ' ') 个文件到 $TARGET_DIR"

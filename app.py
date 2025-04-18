@@ -1,7 +1,4 @@
 import os,sys
-
-from asr_rename import asr_and_rename_files
-
 if len(sys.argv)==1:sys.argv.append('v2')
 version="v1"if sys.argv[1]=="v1" else"v2"
 os.environ["version"]=version
@@ -20,6 +17,7 @@ from subprocess import Popen
 import signal
 from config import python_exec,infer_device,is_half,exp_root,webui_port_main,webui_port_infer_tts,webui_port_uvr5,webui_port_subfix,is_share
 from tools.i18n.i18n import I18nAuto, scan_language_list
+from tools.asr_rename import asr_and_rename_files
 
 os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO'
 torch.manual_seed(233333)
@@ -179,7 +177,7 @@ process_name_uvr5 = i18n("人声分离WebUI")
 def change_uvr5():
     global p_uvr5
     if p_uvr5 is None:
-        cmd = '"%s" tools/uvr5/webui.py "%s" %s %s %s'%(python_exec,infer_device,is_half,webui_port_uvr5,is_share)
+        cmd = 'PYTHONPATH=. "%s" tools/uvr5/webui.py "%s" %s %s %s'%(python_exec,infer_device,is_half,webui_port_uvr5,is_share)
         yield process_info(process_name_uvr5, "opened"), {'__type__':'update','visible':False}, {'__type__':'update','visible':True}
         print(cmd)
         p_uvr5 = Popen(cmd, shell=True)
@@ -192,7 +190,7 @@ process_name_tts = i18n("TTS推理WebUI")
 def change_tts_inference():
     global p_tts_inference
     #####v3暂不支持加速推理
-    cmd = '"%s" indextts/inference_webui.py "%s"'%(python_exec, language)
+    cmd = 'PYTHONPATH=. "%s" indextts/inference_webui.py "%s"'%(python_exec, language)
     if p_tts_inference is None:
         os.environ["is_half"]=str(is_half)
         os.environ["infer_ttswebui"]=str(webui_port_infer_tts)
@@ -212,7 +210,7 @@ def open_denoise(denoise_inp_dir, denoise_opt_dir):
         denoise_inp_dir=clean_path(denoise_inp_dir)
         denoise_opt_dir=clean_path(denoise_opt_dir)
         check_for_existance([denoise_inp_dir])
-        cmd = '"%s" tools/cmd-denoise.py -i "%s" -o "%s" -p %s'%(python_exec,denoise_inp_dir,denoise_opt_dir,"float16"if is_half==True else "float32")
+        cmd = 'PYTHONPATH=. "%s" tools/cmd-denoise.py -i "%s" -o "%s" -p %s'%(python_exec,denoise_inp_dir,denoise_opt_dir,"float16"if is_half==True else "float32")
 
         yield process_info(process_name_denoise, "opened"), {"__type__": "update", "visible": False}, {"__type__": "update", "visible": True}, {"__type__": "update"}, {"__type__": "update"}
         print(cmd)
@@ -247,7 +245,7 @@ def open_slice(inp,opt_root,threshold,min_length,min_interval,hop_size,max_sil_k
         return
     if (ps_slice == []):
         for i_part in range(n_parts):
-            cmd = '"%s" tools/slice_audio.py "%s" "%s" %s %s %s %s %s %s %s %s %s''' % (python_exec,inp, opt_root, threshold, min_length, min_interval, hop_size, max_sil_kept, _max, alpha, i_part, n_parts)
+            cmd = 'PYTHONPATH=. "%s" tools/slice_audio.py "%s" "%s" %s %s %s %s %s %s %s %s %s''' % (python_exec,inp, opt_root, threshold, min_length, min_interval, hop_size, max_sil_kept, _max, alpha, i_part, n_parts)
             print(cmd)
             p = Popen(cmd, shell=True)
             ps_slice.append(p)
@@ -272,7 +270,7 @@ def close_slice():
 
 if os.path.exists('checkpoints/gpt.pth'):...
 else:
-    cmd = '"%s" tools/download_models.py'%python_exec
+    cmd = 'PYTHONPATH=. "%s" tools/download_models.py'%python_exec
     p = Popen(cmd, shell=True)
     p.wait()
 
@@ -350,7 +348,7 @@ with gr.Blocks(title="GPT-SoVITS WebUI") as app:
                         asr_input_dir = gr.Textbox(label=i18n("ASR输入文件夹路径"), value="",show_copy_button=True)
                         asr_input_explorer = gr.FileExplorer(label=i18n("ASR输入文件夹路径"), file_count="single", interactive=True,root_dir="./WORKSPACE",visible=True)
                     with gr.Column():
-                        asr_output_dir = gr.Textbox(label=i18n("ASR输出文件夹路径"), value="output/asr_opt")
+                        asr_output_dir = gr.Textbox(label=i18n("ASR输出文件夹路径"), value="WORKSPACE/output/asr_opt")
                         # asr_output_dir_explorer = gr.FileExplorer(label=i18n("ASR输出文件夹路径"), file_count="single", interactive=True,root_dir="./WORKSPACE",visible=True)
                     asr_rename_btn = gr.Button(value=i18n("识别语音内容并重命名切分后的音频"), variant="primary", visible=True)
                 asr_input_explorer.change(update_path, [asr_input_explorer], [asr_input_dir])
@@ -362,7 +360,7 @@ with gr.Blocks(title="GPT-SoVITS WebUI") as app:
                 with gr.Column(scale=3):
                     with gr.Row():
                         denoise_input_dir=gr.Textbox(label=i18n("输入文件夹路径"),value="")
-                        denoise_output_dir=gr.Textbox(label=i18n("输出文件夹路径"),value="output/denoise_opt")
+                        denoise_output_dir=gr.Textbox(label=i18n("输出文件夹路径"),value="WORKSPACE/output/denoise_opt")
                     with gr.Row():
                         denoise_info = gr.Textbox(label=process_info(process_name_denoise, "info"))
                 open_denoise_button = gr.Button(value=process_info(process_name_denoise, "open"),variant="primary",visible=True)

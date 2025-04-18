@@ -1,7 +1,6 @@
 import os
 import shutil
 
-from scipy.constants import precision
 from faster_whisper import WhisperModel
 
 def asr_and_rename_files(input_dir,output_dir,device='cpu',precision='float32'):

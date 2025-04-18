@@ -1,4 +1,5 @@
 import os
+import shutil
 import traceback,gradio as gr
 import logging
 
@@ -44,7 +45,41 @@ def html_center(text, label='p'):
                 <{label} style="margin: 0; padding: 0;">{text}</{label}>
                 </div>"""
 
-def uvr(model_name, inp_root, save_root_vocal, paths, save_root_ins, agg, format0):
+def ensure_dirs_exist():
+    """确保必要的目录存在，如果不存在则创建"""
+    dirs = ["./WORKSPACE", "./WORKSPACE/input", "WORKSPACE/output/uvr5_opt"]
+    for dir_path in dirs:
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path, exist_ok=True)
+    return "./WORKSPACE/input"
+
+# 修改 wav_inputs 相关代码
+def save_uploaded_files(files):
+    """将上传的文件保存到 WORKSPACE/input 目录"""
+    ensure_dirs_exist()
+    saved_paths = []
+    for file in files:
+        if file is not None:
+            file_path = os.path.join("./WORKSPACE/input", os.path.basename(file.name))
+            shutil.copy(file.name, file_path)
+            saved_paths.append(file_path)
+    return saved_paths
+
+def uvr(model_name, dir_wav_input, save_root_vocal, wav_inputs, save_root_ins, agg, format0):
+    # 确保目录存在
+    ensure_dirs_exist()
+
+    # 如果有上传文件且没有指定输入目录，则使用上传的文件
+    if wav_inputs and not dir_wav_input.strip():
+        # 保存上传的文件到 WORKSPACE/input
+        saved_paths = save_uploaded_files(wav_inputs)
+        paths=saved_paths
+        # 将目录设置为 WORKSPACE/input
+        inp_root = "./WORKSPACE/input"
+    else:
+        inp_root=dir_wav_input
+        paths=wav_inputs
+
     infos = []
     try:
         inp_root = clean_path(inp_root)
@@ -78,6 +113,10 @@ def uvr(model_name, inp_root, save_root_vocal, paths, save_root_ins, agg, format
             paths = [path.name for path in paths]
         for path in paths:
             inp_path = os.path.join(inp_root, path)
+            ext = os.path.splitext(inp_path)[-1].lower()
+            if ext not in [".wav", ".mp3", ".flac", ".m4a"]:
+                infos.append(f"{os.path.basename(inp_path)}->Unsupported file format")
+                continue
             if(os.path.isfile(inp_path)==False):continue
             need_reformat = 1
             done = 0
@@ -117,6 +156,7 @@ def uvr(model_name, inp_root, save_root_vocal, paths, save_root_ins, agg, format
                 )
                 yield "\n".join(infos)
     except:
+        print(traceback.format_exc())
         infos.append(traceback.format_exc())
         yield "\n".join(infos)
     finally:
@@ -133,6 +173,15 @@ def uvr(model_name, inp_root, save_root_vocal, paths, save_root_ins, agg, format
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
     yield "\n".join(infos)
+
+
+# 修改 but2.click 部分，在调用 uvr 函数前处理上传的文件
+def process_inputs(model_choose, dir_wav_input, opt_vocal_root, wav_inputs, opt_ins_root, agg, format0):
+
+
+    # 调用原来的 uvr 函数
+    return next(uvr(model_choose, dir_wav_input, opt_vocal_root, wav_inputs, opt_ins_root, agg, format0))
+
 
 with gr.Blocks(title="UVR5 WebUI") as app:
     gr.Markdown(
@@ -166,7 +215,8 @@ with gr.Blocks(title="UVR5 WebUI") as app:
                         )
                         input_explorer = gr.FileExplorer(root_dir="./WORKSPACE", label=i18n("选择文件夹"), file_count="single")
                         wav_inputs = gr.File(
-                            file_count="multiple", label=i18n("也可选择上传文件，优先读文件夹")
+                            file_count="multiple", label=i18n("也可选择上传文件，优先读文件夹"),
+
                         )
                         input_explorer.change(lambda x: x, inputs=input_explorer, outputs=dir_wav_input)
                     with gr.Column():
@@ -180,10 +230,10 @@ with gr.Blocks(title="UVR5 WebUI") as app:
                             visible=False,  # 先不开放调整
                         )
                         opt_vocal_root = gr.Textbox(
-                            label=i18n("指定输出主人声文件夹"), value="output/uvr5_opt"
+                            label=i18n("指定输出主人声文件夹"), value="WORKSPACE/output/uvr5_opt"
                         )
                         opt_ins_root = gr.Textbox(
-                            label=i18n("指定输出非主人声文件夹"), value="output/uvr5_opt"
+                            label=i18n("指定输出非主人声文件夹"), value="WORKSPACE/output/uvr5_opt"
                         )
                         format0 = gr.Radio(
                             label=i18n("导出文件格式"),
@@ -197,7 +247,7 @@ with gr.Blocks(title="UVR5 WebUI") as app:
                             with gr.Row():
                                 vc_output4 = gr.Textbox(label=i18n("输出信息"),lines=3)
                     but2.click(
-                        uvr,
+                        process_inputs,
                         [
                             model_choose,
                             dir_wav_input,

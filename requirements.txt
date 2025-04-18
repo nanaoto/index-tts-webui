@@ -24,8 +24,9 @@ funasr==1.0.27
 tqdm
 addict
 datasets==2.18.0
-WeTextProcessing; platform_machine != "Darwin"
+WeTextProcessing; platform_system != "Darwin"
 wetext; platform_system == "Darwin"
 Faster_Whisper
 simplejson
 sortedcontainers
+scipy
