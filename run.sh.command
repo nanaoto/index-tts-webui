@@ -245,7 +245,7 @@ pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 # 安装依赖
 echo "正在安装依赖..."
 pip install --upgrade pip
-pip install -r requirements.txt --prefer-binary
+pip install -r requirements.txt
 if [[ $? -ne 0 ]]; then
     echo "错误: 安装依赖失败"
     read -p "按回车键退出..."

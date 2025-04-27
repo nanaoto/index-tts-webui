@@ -23,6 +23,11 @@ os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO'
 torch.manual_seed(233333)
 tmp = os.path.join(now_dir, "TEMP")
 os.makedirs(tmp, exist_ok=True)
+os.makedirs(os.path.join(now_dir, "WORKSPACE"), exist_ok=True)
+os.makedirs(os.path.join(now_dir, "WORKSPACE","source"), exist_ok=True)
+os.makedirs(os.path.join(now_dir, "WORKSPACE","denoise_opt"), exist_ok=True)
+os.makedirs(os.path.join(now_dir, "WORKSPACE","asr_opt"), exist_ok=True)
+os.makedirs(os.path.join(now_dir, "WORKSPACE","slicer_opt"), exist_ok=True)
 os.environ["TEMP"] = tmp
 if(os.path.exists(tmp)):
     for name in os.listdir(tmp):
@@ -39,10 +44,10 @@ if(os.path.exists(tmp)):
 os.environ["no_proxy"] = "localhost, 127.0.0.1, ::1"
 os.environ["all_proxy"] = ""
 
-language=sys.argv[-1] if sys.argv[-1] in scan_language_list() else "Auto"
+language=sys.argv[-1] if sys.argv[-1] in scan_language_list() else "zh_CN"
 os.environ["language"]=language
 i18n = I18nAuto(language=language)
-
+print(language)
 import gradio as gr
 n_cpu=cpu_count()
 
@@ -268,7 +273,7 @@ def close_slice():
         ps_slice=[]
     return process_info(process_name_slice, "closed"), {"__type__": "update", "visible": True}, {"__type__": "update", "visible": False}
 
-if os.path.exists('checkpoints/gpt.pth'):...
+if os.path.exists(os.path.join('checkpoints','gpt.pth')):...
 else:
     cmd = 'PYTHONPATH=. "%s" tools/download_models.py'%python_exec
     p = Popen(cmd, shell=True)
@@ -287,18 +292,18 @@ def toggle_path(explorer):
         return gr.update(visible=False)
     else:
         return gr.update(visible=True)
-def run_asr_rename(input_dir,output_dir):
-    asr_and_rename_files(input_dir,output_dir)
-    return gr.update(value=output_dir)
 
-with gr.Blocks(title="GPT-SoVITS WebUI") as app:
+with gr.Blocks(title="IndexTTS WebUI") as app:
     gr.Markdown(
         value=
-            i18n("本软件以MIT协议开源, 作者不对软件具备任何控制力, 使用软件者、传播软件导出的声音者自负全责.") + "<br>" + i18n("如不认可该条款, 则不能使用或引用软件包内任何代码和文件. 详见根目录LICENSE.")
+            i18n("本软件以Apache License 2.0协议开源, 作者不对软件具备任何控制力, 使用软件者、传播软件导出的声音者自负全责.") + "<br>" +
+            i18n("如不认可该条款, 则不能使用或引用软件包内任何代码和文件. 详见根目录LICENSE.")
     )
     gr.Markdown(
-        value=
-            i18n("中文教程文档") + ": " + "https://www.yuque.com/baicaigongchang1145haoyuangong/ib3g1e"
+        value=i18n("鸣谢：IndexTTS")+": " + "https://github.com/index-tts/index-tts" + "<br>" +
+            i18n("中文教程文档") + ": " + "(施工中)https://gey5xcecoh.feishu.cn/wiki/XIdTwghVdirBFPkOERsctFC7nnf" + "<br>" +
+        i18n("作者")+": "+ "宇宙重女库瓦特罗" + "<br>" +
+        i18n("IndexTTS交流QQ群") + ": " + "553460296"
     )
 
     with gr.Tabs():
@@ -318,14 +323,14 @@ with gr.Blocks(title="GPT-SoVITS WebUI") as app:
                         with gr.Row():
                             with gr.Column():
                                 # with gr.Row():
-                                slice_inp_path = gr.Textbox(label=i18n("音频自动切分输入路径，可文件可文件夹"), value="")
+                                slice_inp_path = gr.Textbox(label=i18n("填写音频自动切分输入路径，或在将文件放入项目根目录下的WORKSPACE后在下方选择"), interactive=True,value="")
                                     # slice_inp_btn = gr.Button(value=i18n("选择"), variant="primary", visible=True)
-                                slice_inp_ex = gr.FileExplorer(label=i18n("音频自动切分输入路径，可文件可文件夹"), file_count="single", interactive=True,root_dir="./WORKSPACE",visible=True)
+                                slice_inp_ex = gr.FileExplorer(label=i18n("填写音频自动切分输入路径，或在下方选择"), file_count="single", interactive=True,root_dir="WORKSPACE",visible=True)
                                 slice_inp_ex.change(update_path, [slice_inp_ex], [slice_inp_path])
                                 # slice_inp_btn.click(toggle_path, [slice_inp_ex], [slice_inp_ex])
                             with gr.Column():
-                                slice_opt_root = gr.Textbox(label=i18n("切分后的子音频的输出根目录"), value="WORKSPACE/output/slicer_opt")
-                                slice_opt_ex = gr.FileExplorer(label=i18n("切分后的子音频的输出根目录"), file_count="single", interactive=True,root_dir="./WORKSPACE",visible=True)
+                                slice_opt_root = gr.Textbox(label=i18n("切分后的子音频的输出根目录"), interactive=True,value="WORKSPACE/slicer_opt")
+                                slice_opt_ex = gr.FileExplorer(label=i18n("切分后的子音频的输出根目录"), file_count="single", interactive=True,root_dir="WORKSPACE",visible=True)
                                 slice_opt_ex.change(update_path, [slice_opt_ex], [slice_opt_root])
                         with gr.Row():
                             threshold=gr.Textbox(label=i18n("threshold:音量小于这个值视作静音的备选切割点"),value="-34",visible=False)
@@ -342,25 +347,16 @@ with gr.Blocks(title="GPT-SoVITS WebUI") as app:
                     open_slicer_button = gr.Button(value=process_info(process_name_slice, "open"),variant="primary",visible=True)
                     close_slicer_button = gr.Button(value=process_info(process_name_slice, "close"),variant="primary",visible=False)
 
-            with gr.Accordion(label="0c-"+i18n("ASR语音识别工具")):
-                with gr.Row():
-                    with gr.Column():
-                        asr_input_dir = gr.Textbox(label=i18n("ASR输入文件夹路径"), value="",show_copy_button=True)
-                        asr_input_explorer = gr.FileExplorer(label=i18n("ASR输入文件夹路径"), file_count="single", interactive=True,root_dir="./WORKSPACE",visible=True)
-                    with gr.Column():
-                        asr_output_dir = gr.Textbox(label=i18n("ASR输出文件夹路径"), value="WORKSPACE/output/asr_opt")
-                        # asr_output_dir_explorer = gr.FileExplorer(label=i18n("ASR输出文件夹路径"), file_count="single", interactive=True,root_dir="./WORKSPACE",visible=True)
-                    asr_rename_btn = gr.Button(value=i18n("识别语音内容并重命名切分后的音频"), variant="primary", visible=True)
-                asr_input_explorer.change(update_path, [asr_input_explorer], [asr_input_dir])
-                # asr_output_dir_explorer.change(update_path, [asr_output_dir_explorer], [asr_output_dir])
-                asr_rename_btn.click(run_asr_rename, [asr_input_dir, asr_output_dir], [asr_output_dir])
-
-            gr.Markdown(value="0bb-"+i18n("语音降噪工具"))
+            gr.Markdown(value="0c-"+i18n("语音降噪工具"))
             with gr.Row():
                 with gr.Column(scale=3):
                     with gr.Row():
-                        denoise_input_dir=gr.Textbox(label=i18n("输入文件夹路径"),value="")
-                        denoise_output_dir=gr.Textbox(label=i18n("输出文件夹路径"),value="WORKSPACE/output/denoise_opt")
+                        denoise_input_dir=gr.Textbox(label=i18n("填写输入文件夹路径"),value="WORKSPACE/slicer_opt")
+                        slice_inp_ex = gr.FileExplorer(label=i18n("请选择输入文件夹"),
+                                                       file_count="single", interactive=True, root_dir="WORKSPACE/slicer_opt",
+                                                       visible=True)
+                        slice_inp_ex.change(update_path, [slice_inp_ex], [denoise_input_dir])
+                        denoise_output_dir=gr.Textbox(label=i18n("填写输出文件夹路径"),value="WORKSPACE/denoise_opt")
                     with gr.Row():
                         denoise_info = gr.Textbox(label=process_info(process_name_denoise, "info"))
                 open_denoise_button = gr.Button(value=process_info(process_name_denoise, "open"),variant="primary",visible=True)

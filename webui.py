@@ -15,7 +15,6 @@ from tools.i18n.i18n import I18nAuto
 
 i18n = I18nAuto(language="zh_CN")
 MODE = 'local'
-snapshot_download("IndexTeam/Index-TTS",local_dir="checkpoints",)
 
 tts = IndexTTS(model_dir="checkpoints",cfg_path="checkpoints/config.yaml")
 

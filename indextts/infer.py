@@ -7,7 +7,7 @@ import torchaudio
 from torch.nn.utils.rnn import pad_sequence
 from omegaconf import OmegaConf
 
-from common import i18n
+from tools.common import i18n
 from indextts.BigVGAN.models import BigVGAN as Generator
 from indextts.gpt.model import UnifiedVoice
 from indextts.utils.checkpoint import load_checkpoint

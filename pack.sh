@@ -9,7 +9,7 @@ fi
 # 获取仓库根目录的绝对路径
 REPO_ROOT=$(git rev-parse --show-toplevel)
 # 目标目录在仓库根目录的上一层
-TARGET_DIR=$(dirname "$REPO_ROOT")/webui_pack_1
+TARGET_DIR=$(dirname "$REPO_ROOT")/webui_pack_v1.7
 
 # 创建目标目录
 mkdir -p "$TARGET_DIR"

@@ -1,7 +1,9 @@
 import os,sys,numpy as np
+import time
 import traceback
 from scipy.io import wavfile
 
+from asr_rename import asr_and_rename_files
 from audio_utils import load_audio
 # parent_directory = os.path.dirname(os.path.abspath(__file__))
 # sys.path.append(parent_directory)
@@ -28,7 +30,9 @@ def slice(inp,opt_root,threshold,min_length,min_interval,hop_size,max_sil_kept,_
     for inp_path in input[int(i_part)::int(all_part)]:
         # print(inp_path)
         try:
-            name = os.path.basename(inp_path)
+            name = os.path.basename(inp_path).split('.')[0]
+            if os.path.isdir(os.path.join(opt_root, name)):
+                name = os.path.basename(inp_path).split('.')[0] + str(int(time.time()))
             os.makedirs(os.path.join(opt_root, name), exist_ok=True)
             audio = load_audio(inp_path, 32000)
             # print(audio.shape)
@@ -44,6 +48,7 @@ def slice(inp,opt_root,threshold,min_length,min_interval,hop_size,max_sil_kept,_
                     (chunk * 32767).astype(np.int16),
                 )
                 index += 1
+            asr_and_rename_files(input_dir=os.path.join(opt_root, name),output_dir=os.path.join(opt_root, name))
         except:
             print(inp_path,"->fail->",traceback.format_exc())
     return "执行完毕，请检查输出文件"
