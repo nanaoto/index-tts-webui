@@ -73,6 +73,13 @@ def save_file_update_explorer(files):
             shutil.copy(file.name, file_path)
     return gr.update(value=os.path.join("WORKSPACE", "source"))
 
+def ensure_dir(path):
+    if os.path.isfile(path):
+        gr.Warning(i18n("请选择文件夹，不支持单文件"))
+        return None
+    if os.path.isdir(path):
+        return path
+
 def uvr(model_name, dir_wav_input, save_root_vocal, wav_inputs, save_root_ins, agg, format0):
     # 确保目录存在
     ensure_dirs_exist()
@@ -229,7 +236,7 @@ with gr.Blocks(title="UVR5 WebUI") as app:
                             file_count="multiple", label=i18n("也可选择上传文件，优先读文件夹"),
 
                         )
-                        input_explorer.change(lambda x: x, inputs=input_explorer, outputs=dir_wav_input)
+                        input_explorer.change(ensure_dir, inputs=input_explorer, outputs=dir_wav_input)
                     with gr.Column():
                         agg = gr.Slider(
                             minimum=0,

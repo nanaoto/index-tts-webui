@@ -9,12 +9,19 @@ def asr_and_rename_files(input_dir,output_dir,device='cpu',precision='float32'):
     """
     # 确保输出目录存在
     os.makedirs(output_dir, exist_ok=True)
+    if not os.path.isdir("tools/asr/models/"):
+        os.makedirs("tools/asr/models/")
 
     model_path = "tools/asr/models/faster-whisper-large-v3"  # 模型路径
+    if not os.path.isdir(model_path) or not os.path.isfile(os.path.join(model_path, 'config.json')):
+        from modelscope import snapshot_download
+        # 下载模型
+        print("ASR模型不存在，开始下载...")
+        snapshot_download('keepitsimple/faster-whisper-large-v3', local_dir=model_path)
     model = WhisperModel(
         model_size_or_path=model_path, device=device, local_files_only=True,
         compute_type=precision)
-    audio_extensions = ['.wav']
+    audio_extensions = ['.wav','.mp3']
     for root, dirs, files in os.walk(input_dir):
         for file_name in files:
             if file_name.startswith('.'):
@@ -65,7 +72,7 @@ def asr_and_rename_files(input_dir,output_dir,device='cpu',precision='float32'):
 if __name__ == "__main__":
     # from modelscope import snapshot_download
     #
-    # model_dir = snapshot_download('keepitsimple/faster-whisper-large-v3',local_dir='tools/asr/models')
+
     input_dir = "WORKSPACE/input"  # 输入目录
     output_dir = "WORKSPACE/output"  # 输出目录
     device = "cpu"  # 使用的设备
