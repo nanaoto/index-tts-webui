@@ -372,7 +372,7 @@ with gr.Blocks(title="Index-TTS Editor") as app:
                 cut_method_dropdown = gr.Dropdown(label=i18n("切分文本方法"),value=i18n("按标点符号切"),
                                                   choices=[i18n("凑四句一切"), i18n("凑50字一切"), i18n("按中文句号。切"), i18n("按英文句号.切"), i18n("按标点符号切")])
                 cut_text_btn = gr.Button(i18n("切分文本"), variant="primary")
-                load_text_btn = gr.Button(i18n("刷新文本"), variant="primary")
+                load_text_btn = gr.Button(i18n("刷新文本&参考音频列表"), variant="primary")
                 batch_size = gr.Slider(label=i18n("批处理大小"), value=10, minimum=1, maximum=10, step=1,visible=False)
                 df_len = gr.Textbox(label=i18n("文本分句总数"), value="0", interactive=False)
 
@@ -392,7 +392,7 @@ with gr.Blocks(title="Index-TTS Editor") as app:
         load_text_btn.click(update_text, inputs=text, outputs=[text, df,prev_page_btn,next_page_btn,id_start,id_end])
 
         @gr.render(inputs=[df,id_start,id_end],
-                   triggers=[df.change,id_start.change],
+                   triggers=[df.change,id_start.change,load_text_btn.click],
                    queue=False,
                    concurrency_limit=1)
         def render_texts(df,id_start,id_end):

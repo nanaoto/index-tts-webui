@@ -77,19 +77,6 @@ if torch.backends.mps.is_available():
     set_gpu_numbers.add(0)
 
 gpus = "-".join([i[0] for i in gpu_infos])
-default_gpu_numbers=str(sorted(list(set_gpu_numbers))[0])
-def fix_gpu_number(input):#将越界的number强制改到界内
-    try:
-        if(int(input)not in set_gpu_numbers):return default_gpu_numbers
-    except:return input
-    return input
-def fix_gpu_numbers(inputs):
-    output=[]
-    try:
-        for input in inputs.split(","):output.append(str(fix_gpu_number(input)))
-        return ",".join(output)
-    except:
-        return inputs
 
 model_list = ['checkpoints/bigvgan_discriminator.pth',
               'checkpoints/bigvgan_generator.pth',
