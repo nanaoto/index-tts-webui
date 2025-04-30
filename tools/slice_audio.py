@@ -3,7 +3,7 @@ import time
 import traceback
 from scipy.io import wavfile
 
-from asr_rename import asr_and_rename_files
+# from asr_rename import asr_and_rename_files
 from audio_utils import load_audio
 # parent_directory = os.path.dirname(os.path.abspath(__file__))
 # sys.path.append(parent_directory)
@@ -48,7 +48,7 @@ def slice(inp,opt_root,threshold,min_length,min_interval,hop_size,max_sil_kept,_
                     (chunk * 32767).astype(np.int16),
                 )
                 index += 1
-            asr_and_rename_files(input_dir=os.path.join(opt_root, name),output_dir=os.path.join(opt_root, name))
+            # asr_and_rename_files(input_dir=os.path.join(opt_root, name),output_dir=os.path.join(opt_root, name))
         except:
             print(inp_path,"->fail->",traceback.format_exc())
     return "执行完毕，请检查输出文件"

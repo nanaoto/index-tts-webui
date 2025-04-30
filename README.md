@@ -4,7 +4,7 @@
 </div>
 
 
-<h2><center>IndexTTS: An Industrial-Level Controllable and Efficient Zero-Shot Text-To-Speech System</h2>
+<h2><center>IndexTTS批量语音克隆工具</h2>
 
 <p align="center">
 <a href='https://arxiv.org/abs/2502.05512'><img src='https://img.shields.io/badge/ArXiv-2502.05512-red'></a>
