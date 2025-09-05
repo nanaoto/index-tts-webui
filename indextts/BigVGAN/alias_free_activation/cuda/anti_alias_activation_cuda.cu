@@ -44,10 +44,10 @@ namespace
     __global__ void anti_alias_activation_forward(
         output_t *dst,
         const input_t *src,
-        const input_t *up_ftr,
-        const input_t *down_ftr,
-        const input_t *alpha,
-        const input_t *beta,
+        const acc_t *up_ftr,
+        const acc_t *down_ftr,
+        const acc_t *alpha,
+        const acc_t *beta,
         int batch_size,
         int channels,
         int seq_len)
@@ -84,9 +84,10 @@ namespace
 
         // Alpha and beta values for snake activatons. Applies exp by default
         alpha = alpha + blockIdx.y;
-        input_t alpha_val = expf(alpha[0]);
         beta = beta + blockIdx.y;
-        input_t beta_val = expf(beta[0]);
+
+        acc_t alpha_val = expf(alpha[0]);
+        acc_t beta_val = expf(beta[0]);
 
         #pragma unroll
         for (int it = 0; it < FILTER_SIZE; it += 1)
@@ -118,7 +119,7 @@ namespace
         #pragma unroll
         for (int it = 0; it < (2 * BUFFER_SIZE + 2 * FILTER_SIZE); it += 1)
         {
-            input_t acc = 0.0;
+            acc_t acc = 0.0;
             int element_index = intermediate_seq_offset + it; // index for intermediate
             #pragma unroll
             for (int f_idx = 0; f_idx < FILTER_SIZE; f_idx += 1)
@@ -136,7 +137,8 @@ namespace
         #pragma unroll
         for (int it = 0; it < 2 * BUFFER_SIZE + 2 * FILTER_SIZE; it += 1)
         {
-            intermediates[it + DOWNSAMPLE_REPLICATION_PAD_LEFT] += (1.0 / (beta_val + no_div_by_zero)) * sinf(intermediates[it + DOWNSAMPLE_REPLICATION_PAD_LEFT] * alpha_val) * sinf(intermediates[it + DOWNSAMPLE_REPLICATION_PAD_LEFT] * alpha_val);
+            acc_t a = sinf(intermediates[it + DOWNSAMPLE_REPLICATION_PAD_LEFT] * alpha_val);
+            intermediates[it + DOWNSAMPLE_REPLICATION_PAD_LEFT] += (1.0 / (beta_val + no_div_by_zero)) * a * a;
         }
 
         // Apply replication padding before downsampling conv from intermediates
@@ -155,7 +157,7 @@ namespace
         #pragma unroll
         for (int it = 0; it < BUFFER_SIZE; it += 1)
         {
-            input_t acc = 0.0;
+            acc_t acc = 0.0;
             #pragma unroll
             for (int f_idx = 0; f_idx < FILTER_SIZE; f_idx += 1)
             {
@@ -182,10 +184,10 @@ namespace
     void dispatch_anti_alias_activation_forward(
         output_t *dst,
         const input_t *src,
-        const input_t *up_ftr,
-        const input_t *down_ftr,
-        const input_t *alpha,
-        const input_t *beta,
+        const acc_t *up_ftr,
+        const acc_t *down_ftr,
+        const acc_t *alpha,
+        const acc_t *beta,
         int batch_size,
         int channels,
         int seq_len)
@@ -222,23 +224,31 @@ extern "C" torch::Tensor fwd_cuda(torch::Tensor const &input, torch::Tensor cons
     torch::Tensor anti_alias_activation_results =
         torch::empty({batches, channels, seq_len}, act_options);
 
+    using float32 = float;
+    // The dtype of input is float16, bfloat16, or float32
+    // The dtype of up_filter, down_filter, alpha, and beta is float32
+    // printf("input scalar type: %d\n", input.scalar_type());
+    // printf("up_filter scalar type: %d\n", up_filter.scalar_type());
+    // printf("down_filter scalar type: %d\n", down_filter.scalar_type());
+    // printf("alpha scalar type: %d\n", alpha.scalar_type());
+    // printf("beta scalar type: %d\n", beta.scalar_type());
     void *input_ptr = static_cast<void *>(input.data_ptr());
-    void *up_filter_ptr = static_cast<void *>(up_filter.data_ptr());
-    void *down_filter_ptr = static_cast<void *>(down_filter.data_ptr());
-    void *alpha_ptr = static_cast<void *>(alpha.data_ptr());
-    void *beta_ptr = static_cast<void *>(beta.data_ptr());
+    float32 *up_filter_ptr = static_cast<float32 *>(up_filter.data_ptr());
+    float32 *down_filter_ptr = static_cast<float32 *>(down_filter.data_ptr());
+    float32 *alpha_ptr = static_cast<float32 *>(alpha.data_ptr());
+    float32 *beta_ptr = static_cast<float32 *>(beta.data_ptr());
     void *anti_alias_activation_results_ptr = static_cast<void *>(anti_alias_activation_results.data_ptr());
 
     DISPATCH_FLOAT_HALF_AND_BFLOAT(
         input.scalar_type(),
         "dispatch anti alias activation_forward",
-        dispatch_anti_alias_activation_forward<scalar_t, scalar_t, float>(
+        dispatch_anti_alias_activation_forward<scalar_t, scalar_t, float32>(
             reinterpret_cast<scalar_t *>(anti_alias_activation_results_ptr),
             reinterpret_cast<const scalar_t *>(input_ptr),
-            reinterpret_cast<const scalar_t *>(up_filter_ptr),
-            reinterpret_cast<const scalar_t *>(down_filter_ptr),
-            reinterpret_cast<const scalar_t *>(alpha_ptr),
-            reinterpret_cast<const scalar_t *>(beta_ptr),
+            reinterpret_cast<const float32 *>(up_filter_ptr),
+            reinterpret_cast<const float32 *>(down_filter_ptr),
+            reinterpret_cast<const float32 *>(alpha_ptr),
+            reinterpret_cast<const float32 *>(beta_ptr),
             batches,
             channels,
             seq_len););

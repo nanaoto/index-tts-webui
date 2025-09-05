@@ -3,6 +3,7 @@ __pycache__
 *.egg-info
 *.DS_Store
 .idea/
+.vscode/
 checkpoints/*.pth
 checkpoints/*.vocab
 checkpoints/*.model
@@ -10,3 +11,7 @@ checkpoints/.cache
 outputs/
 **/*/*.pth
 **/checkpoints/
+build/
+*.py[cod]
+*.egg-info/
+.venv

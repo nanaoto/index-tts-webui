@@ -3,12 +3,14 @@
 
 # Adapted from https://github.com/jik876/hifi-gan under the MIT license.
 #   LICENSE is in incl_licenses directory.
-
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from torch.nn import Conv1d, Conv2d, ConvTranspose1d
 from torch.nn.utils import remove_weight_norm, spectral_norm, weight_norm
 
 import indextts.BigVGAN.activations as activations
-from indextts.BigVGAN.alias_free_torch import *
+
 from indextts.BigVGAN.ECAPA_TDNN import ECAPA_TDNN
 from indextts.BigVGAN.utils import get_padding, init_weights
 
@@ -41,7 +43,10 @@ class AMPBlock1(torch.nn.Module):
         self.convs2.apply(init_weights)
 
         self.num_layers = len(self.convs1) + len(self.convs2)  # total number of conv layers
-
+        if self.h.get("use_cuda_kernel", False):
+            from indextts.BigVGAN.alias_free_activation.cuda.activation1d import Activation1d
+        else:
+            from indextts.BigVGAN.alias_free_torch import Activation1d
         if activation == 'snake':  # periodic nonlinearity with snake function and anti-aliasing
             self.activations = nn.ModuleList([
                 Activation1d(
@@ -89,6 +94,10 @@ class AMPBlock2(torch.nn.Module):
         self.convs.apply(init_weights)
 
         self.num_layers = len(self.convs)  # total number of conv layers
+        if self.h.get("use_cuda_kernel", False):
+            from indextts.BigVGAN.alias_free_activation.cuda.activation1d import Activation1d
+        else:
+            from indextts.BigVGAN.alias_free_torch import Activation1d
 
         if activation == 'snake':  # periodic nonlinearity with snake function and anti-aliasing
             self.activations = nn.ModuleList([
@@ -120,9 +129,15 @@ class AMPBlock2(torch.nn.Module):
 
 class BigVGAN(torch.nn.Module):
     # this is our main BigVGAN model. Applies anti-aliased periodic activation for resblocks.
-    def __init__(self, h):
+    def __init__(self, h, use_cuda_kernel=False):
+        """
+        Args:
+            h (dict)
+            use_cuda_kernel (bool): whether to use custom cuda kernel for anti-aliased activation
+        """
         super(BigVGAN, self).__init__()
         self.h = h
+        self.h["use_cuda_kernel"] = use_cuda_kernel
 
         self.num_kernels = len(h.resblock_kernel_sizes)
         self.num_upsamples = len(h.upsample_rates)
@@ -134,7 +149,7 @@ class BigVGAN(torch.nn.Module):
         self.conv_pre = weight_norm(Conv1d(h.gpt_dim, h.upsample_initial_channel, 7, 1, padding=3))
 
         # define which AMPBlock to use. BigVGAN uses AMPBlock1 as default
-        resblock = AMPBlock1 if h.resblock == '1' else AMPBlock2
+        resblock = AMPBlock1 if h.resblock == "1" else AMPBlock2
 
         # transposed conv-based upsamplers. does not apply anti-aliasing
         self.ups = nn.ModuleList()
@@ -150,7 +165,11 @@ class BigVGAN(torch.nn.Module):
         for i in range(len(self.ups)):
             ch = h.upsample_initial_channel // (2 ** (i + 1))
             for j, (k, d) in enumerate(zip(h.resblock_kernel_sizes, h.resblock_dilation_sizes)):
-                self.resblocks.append(resblock(h, ch, k, d, activation=h.activation))
+                self.resblocks.append(resblock(self.h, ch, k, d, activation=h.activation))
+        if use_cuda_kernel:
+            from indextts.BigVGAN.alias_free_activation.cuda.activation1d import Activation1d
+        else:
+            from indextts.BigVGAN.alias_free_torch import Activation1d
 
         # post conv
         if h.activation == "snake":  # periodic nonlinearity with snake function and anti-aliasing
