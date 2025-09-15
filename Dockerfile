@@ -23,7 +23,7 @@ WORKDIR ${WORK_DIR}
 COPY . ${WORK_DIR}
 RUN pip install -U uv
 
-ADD ./Docker/pyproject-pytorch${TORCH_VERSION}-${CUDA_VERSION}.toml ${WORK_DIR}/pyproject.toml
+ADD ./Docker/pyproject-pytorch${TORCH_VERSION}-cuda${CUDA_VERSION}.toml ${WORK_DIR}/pyproject.toml
 
 RUN cd ${WORK_DIR} && uv sync --all-extras
 
