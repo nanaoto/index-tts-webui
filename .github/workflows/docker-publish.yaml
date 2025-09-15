@@ -21,14 +21,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Extract Docker Meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: nanaoto/index-tts
-
       - name: Remove unnecessary tools folder
         run: |
+          echo "::group::Remove unnecessary tools folder"
           echo "Before cleanup:"
           df -h
           
@@ -38,6 +33,7 @@ jobs:
           
           echo "After cleanup:"
           df -h
+          echo "::endgroup::"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
