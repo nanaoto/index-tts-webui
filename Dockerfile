@@ -3,10 +3,13 @@ ARG TORCH_VERSION=2.4.1
 
 FROM pytorch/pytorch:${TORCH_VERSION}-cuda${CUDA_VERSION}-cudnn9-devel
 
+# FROM后再次声明ARG，确保后续命令可用
+ARG TORCH_VERSION
+ARG CUDA_VERSION
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV WORK_DIR="/workspace/index-tts"
 ENV PATH="${PATH}:/root/.local/bin"
-
 ENV TORCH_VERSION=${TORCH_VERSION}
 ENV CUDA_VERSION=${CUDA_VERSION}
 
