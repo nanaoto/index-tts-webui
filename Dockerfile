@@ -7,6 +7,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV WORK_DIR="/workspace/index-tts"
 ENV PATH="${PATH}:/root/.local/bin"
 
+ENV TORCH_VERSION=${TORCH_VERSION}
+ENV CUDA_VERSION=${CUDA_VERSION}
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
