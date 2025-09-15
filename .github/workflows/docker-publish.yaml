@@ -27,6 +27,18 @@ jobs:
         with:
           images: nanaoto/index-tts
 
+      - name: Remove unnecessary tools folder
+        run: |
+          echo "Before cleanup:"
+          df -h
+          
+          sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/lib/jvm
+          sudo rm -rf /usr/share/miniconda
+          
+          echo "After cleanup:"
+          df -h
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
