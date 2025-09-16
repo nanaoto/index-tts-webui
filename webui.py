@@ -291,7 +291,7 @@ with gr.Blocks(title="IndexTTS Demo") as demo:
             ]
         example_table = gr.Dataset(label="Examples",
                                    samples_per_page=20,
-                                   samples=example_cases[:-2],
+                                   samples=example_cases[:-2] if len(example_cases) > 2 else example_cases,
                                    type="index",
                                    components=[prompt_audio,
                                                emo_control_method_full,
