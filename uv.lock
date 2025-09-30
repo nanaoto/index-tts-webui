@@ -3837,7 +3837,7 @@ name = "wetext"
 version = "0.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "kaldifst" },
+    { name = "kaldifst", marker = "platform_machine != 'aarch64' or sys_platform != 'linux'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/f8/5c/742a6de1b6cd3215d5610ae0e4580f761c5dbf2e9e246afe76ed64c3f622/wetext-0.1.0.tar.gz", hash = "sha256:0f9645bc4b6c90119d54dd9f752db40497630a05af80e627f114204cc78f3ad5", size = 1457764, upload-time = "2025-09-08T14:23:47.85Z" }
 wheels = [

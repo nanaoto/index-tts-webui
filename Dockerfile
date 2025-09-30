@@ -34,6 +34,8 @@ ADD ./Docker/pyproject-pytorch${TORCH_VERSION}-cuda${CUDA_VERSION}.toml ${WORK_D
 RUN cd ${WORK_DIR} && uv sync --all-extras
 
 RUN uv tool install "modelscope" && \
-    uv tool install "huggingface_hub[cli]"
+    uv tool install "huggingface_hub[cli]" \
 
-CMD ["/bin/bash"]
+EXPOSE 7860
+
+CMD ["/bin/bash","run.sh"]

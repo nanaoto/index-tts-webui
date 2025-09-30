@@ -23,6 +23,7 @@ conda_env*/
 *.DS_Store
 Thumbs.db
 desktop.ini
+__MACOSX
 
 # IndexTTS.
 /cache/
